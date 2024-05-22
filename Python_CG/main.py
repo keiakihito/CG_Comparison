@@ -8,6 +8,7 @@ def printMtx(mtx):
             print(mtx[rWkr, cWkr], end = ' ')
         print()
 def main():
+    # Setup 3 by 3 SPD dense matrix hardcoded
     mtxA = np.array([[1.5004, 1.3293, 0.8439],[1.3293, 1.2436, 0.6936],[0.8439, 0.6936, 1.2935]])
     printMtx(mtxA)
 

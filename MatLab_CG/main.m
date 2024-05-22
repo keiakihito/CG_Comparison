@@ -1,6 +1,3 @@
-%Print Hello World,　✅
-%disp('Hello, World');
-
 %%Create a random 3 X 3 matrix S
 %S = rand(3, 3);
 %disp('Matrix S');
@@ -11,6 +8,99 @@
 %disp('SPD: A');
 %disp(A);
 
+function[x_sol] = my_pcg(A, b, tol, maxitr, x_0);
+    %Set up return value, x_sol
+    x_sol = x_0;
+
+    % r<- b-Ax
+    r = b - A * x_0;
+    %disp(r);
+
+    % d <- r
+    d = r;
+    %disp(d);
+
+    %delta_new <- r^{T}*r
+    delta_new = r' * r;
+    %disp(delta_new);
+
+    %Set counter
+    wkr = 0;
+
+    while wkr < maxitr && delta_new > tol * tol
+
+        % q <- Ad
+        q = A * d;
+%        disp(q);
+
+        %alpha <- delta_{new} / (d^{T}*q)
+        alpha = delta_new / (d' * q);
+%        disp(alpha);
+
+        %x_{i+1} <- x_{i} + alpha * d
+        x_sol = x_sol + alpha * d;
+%        disp(x_sol)
+
+        if (mod(wkr, 50) == 0 && wkr ~= 0)
+            % r <- b - Ax
+            r = b - A * x_sol; % Recompute residual
+        else
+            % r <- r - alpha*q
+            r = r - alpha * q;
+%            disp(r);
+        end % end of if
+
+        %delta_{old} <- delta_{new}
+        delta_old = delta_new;
+
+        %delta_{new} <- r^{T} * r
+        delta_new = r' * r;
+    %    disp(delta_new);
+
+        %beta <- delta_{new} / delta_{old}
+        beta = delta_new / delta_old;
+    %    disp(beta);
+
+        % d_{i+1} <- r_{i+1} + beta * d_{i}
+        d = r + beta * d;
+%        disp(d);
+
+        % Increment counter
+        wkr = wkr + 1;
+    end % end of while
+
+    if(wkr < maxitr)
+        fprintf("my_pcg() converged at iteration %d\n", wkr);
+    end %end of if
+
+
+end % end of function
+
+
+%Main function
 %Set up 3 x 3 SPD matrix hardcoded
+fprintf('~~3 x 3 SPD matrix~~ \n');
 A = [1.5004 1.3293 0.8439; 1.3293 1.2436 0.6936; 0.8439 0.6936 1.2935];
 disp(A)
+
+% Set given vector b = [1, 1, 1]
+b = [1; 1; 1];
+
+% Set up initial guess x_0 = [0, 0, 0]
+x_ans = [1000; 1000; 1000];
+x_0 = [1000; 1000; 1000];
+% Set epsilon
+eps = 1e-6;
+
+%Maxnumber of iteration
+maxItr = 1000;
+
+%Answer key
+%Solve Ax = b with pcg
+fprintf('Slove Ax = b with pcg()\n');
+x_ans = pcg(A, b, eps, maxItr);
+disp(x_ans);
+
+fprintf('Slove Ax = b with my_pcg()\n');
+x_myPcg = my_pcg(A, b, eps, maxItr, x_0);
+disp(x_myPcg)
