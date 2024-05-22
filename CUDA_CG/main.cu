@@ -60,6 +60,13 @@ int main(int argc, char** argv)
     float alphamns1 = -1.0;// negative alpha
     float beta = 0.0;
     float r0, r1 = 0.0; // residual
+    float delta_new = 0.0;
+    float delta_old = 0.0;
+    
+    //Stride for x and y using contiguous vectors
+    //Using for calling cublasSgemv
+    int strd_x = 1;
+    int strd_y = 1;
      
 
     //(0) Set initial guess and given vector b, right hand side
@@ -113,26 +120,45 @@ int main(int argc, char** argv)
 
 
 
-    //(4) Create dense matrix scriptors and dense vector scriptors
-    // Configure and links for each pointer
+    //(5) Iteration
+    /* 💫💫💫Begin CG💫💫💫 */
+    //Setting up the initial state.
+    /*
+    1. Calculate Ax_{0}
+    2. Find residual r_{0} = b - Ax{0}
+    3. Set d <- r
+    4. Set delta_{new} <- r^{T} * r
+    */
+
+    //1. Calculate Ax_{0}
+    checkCudaErrors(cublasSgemv(cublasHandle, CUBLAS_OP_N, N, N, &alpha, mtxA_d, N, x_d, strd_x, &beta, Ax_d, strd_y));
+    //✅
+    // printf("\n\n~~vector Ax_{0}~~\n");
+    // print_vector(Ax_d, N);
+
+    //2. Find residual r_{0} = b - Ax{0}
+    //This function performs the operation y=αx+y.
+    // Update the residual vector r by calculating r_{0} = b - Ax_{0}
+    // Given vector b is d_r only used 1 time. We will updateing d_r as a new residual.
+    // which is critical for determining the direction and magnitude of the initial search step in the CG algorithm.
+    checkCudaErrors(cublasSaxpy(cublasHandle, N, &alphamns1, Ax_d, strd_x, r_d, strd_y));
+    // //✅
+    // printf("\n\n~~vector r_{0}~~\n");
+    // print_vector(r_d, N);
+
+    //3. Set d <- r;
+    CHECK(cudaMemcpy(dirc_d, r_d, N * sizeof(float), cudaMemcpyDeviceToDevice));
+    // //✅
+    // printf("\n\n~~vector d_{0}~~\n");
+    // print_vector(dirc_d, N);
+
+    //4,  delta_{new} <- r^{T} * r
+    // Compute the squared norm of the initial residual vector r (stored in r1).
+    checkCudaErrors(cublasSdot(cublasHandle, N, r_d, strd_x, r_d, strd_y, &delta_new));
+    // //✅
+    // printf("\n\n~~vector delta_new{0}~~\n %f\n ", delta_new);
     
-    // For linking mtxA_dsc with mtxA_d
-    cusparseDnMatDescr_t mtxA_dsc = NULL; 
-    checkCudaErrors(cusparseCreateDnMat(&mtxA_dsc, N, N, N, mtxA_d, CUDA_R_32F, CUSPARSE_ORDER_ROW));
-
-    // For linking x_dsc with x_d
-    cusparseDnVecDescr_t x_dsc = NULL;
-    checkCudaErrors(cusparseCreateDnVec(&x_dsc, N, x_d, CUDA_R_32F));
-
-    // For linking dirc_dsc with dirc_d
-    cusparseDnVecDescr_t dirc_dsc = NULL;
-    checkCudaErrors(cusparseCreateDnVec(&dirc_dsc, N, dirc_d, CUDA_R_32F));
-
-    // For linking Ax_dsc with Ax_d
-    cusparseDnVecDescr_t Ax_dsc = NULL;
-    checkCudaErrors(cusparseCreateDnVec(&Ax_dsc, N, Ax_d, CUDA_R_32F));
-
-
+    int cntr = 1; // counter
 
     // Free the GPU memory after use
     free(x);

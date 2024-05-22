@@ -4,17 +4,20 @@ function[x_sol] = my_pcg(A, b, tol, maxitr, x_0);
     %Set up return value, x_sol
     x_sol = x_0;
 
+    Ax = A * x_0;
+%    disp(Ax);
+
     % r<- b-Ax
-    r = b - A * x_0;
+    r = b - Ax;
     %disp(r);
 
     % d <- r
     d = r;
-    %disp(d);
+%    disp(d);
 
     %delta_new <- r^{T}*r
     delta_new = r' * r;
-    %disp(delta_new);
+    disp(delta_new);
 
     %Set counter
     wkr = 0;
@@ -94,37 +97,37 @@ end % end of validate
 
 %Main function
 
-% ~~Test 1~~~
-%Set up 3 x 3 SPD matrix hardcoded
-%fprintf('~~3 x 3 SPD matrix~~ \n');
-%A = [1.5004 1.3293 0.8439; 1.3293 1.2436 0.6936; 0.8439 0.6936 1.2935];
+%% ~~Test 1~~~
+%%Set up 3 x 3 SPD matrix hardcoded
+fprintf('~~3 x 3 SPD matrix~~ \n');
+A = [1.5004 1.3293 0.8439; 1.3293 1.2436 0.6936; 0.8439 0.6936 1.2935];
 %disp(A)
 
-%% Set given vector b = [1, 1, 1]
-%b = [1; 1; 1];
+% Set given vector b = [1, 1, 1]
+b = [1; 1; 1];
 
-%% Set up initial guess x_0 = [0, 0, 0]
-%x_ans = [0; 0; 0];
-%x_0 = [0; 0; 0];
-
-
+% Set up initial guess x_0 = [0, 0, 0]
+x_ans = [0; 0; 0];
+x_0 = [0; 0; 0];
 
 
-% ~~Test 2~~~
-%Let N is row and column number of matrix
-N = 10000;
-S = rand(N, N);
-%disp('Matrix S');
-%disp(S);
 
-% Create SPD matrix with A^{T}*A
-A = S' * S;
-%disp('SPD: A');
-%disp(A);
 
-b = ones(N, 1);
-x_ans = zeros(N,1);
-x_0 = zeros(N,1);
+%% ~~Test 2~~~
+%%Let N is row and column number of matrix
+%N = 10000;
+%S = rand(N, N);
+%%disp('Matrix S');
+%%disp(S);
+%
+%% Create SPD matrix with A^{T}*A
+%A = S' * S;
+%%disp('SPD: A');
+%%disp(A);
+%
+%b = ones(N, 1);
+%x_ans = zeros(N,1);
+%x_0 = zeros(N,1);
 
 
 
@@ -134,10 +137,10 @@ eps = 1e-6;
 %Maxnumber of iteration
 maxItr = 100000;
 
-%Answer key
-%Solve Ax = b with pcg
-fprintf('Slove Ax = b with pcg()\n');
-x_ans = pcg(A, b, eps, maxItr);
+%%Answer key
+%%Solve Ax = b with pcg
+%fprintf('Slove Ax = b with pcg()\n');
+%x_ans = pcg(A, b, eps, maxItr);
 %disp(x_ans);
 
 %Solve Ax = b with manual CG implemenation
@@ -146,7 +149,7 @@ x_myPcg = my_pcg(A, b, eps, maxItr, x_0);
 %disp(x_myPcg)
 
 %Compare answer and my solution
-validate(x_ans, x_myPcg);
+%validate(x_ans, x_myPcg);
 
 
 
