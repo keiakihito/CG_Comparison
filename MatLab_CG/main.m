@@ -93,7 +93,6 @@ end % end of validate
 
 
 %Main function
-%Create a random 3 X 3 matrix S
 
 % ~~Test 1~~~
 %Set up 3 x 3 SPD matrix hardcoded

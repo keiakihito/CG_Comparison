@@ -23,13 +23,13 @@ void print_vector(const float *d_val, int size) {
     // Print the values to check them
     for (int i = 0; i < size; i++) {
         if( i < 3){
-            printf("%f ", check_r[i]);
+            printf("%f \n", check_r[i]);
         }
     }
-    printf("\n...\n");
-    printf("%f ", check_r[size-3]);
-    printf("%f ", check_r[size-2]);
-    printf("%f ", check_r[size-1]);
+    // printf("\n...\n");
+    // printf("%f ", check_r[size-3]);
+    // printf("%f ", check_r[size-2]);
+    // printf("%f ", check_r[size-1]);
     
 
     // Free allocated memory
@@ -55,13 +55,13 @@ void print_vector(const int *d_val, int size) {
     // Print the values to check them
     for (int i = 0; i < size; i++) {
         if( i < 3){
-            printf("%d ", check_r[i]);
+            printf("%d \n", check_r[i]);
         }
     }
-    printf("\n...\n");
-    printf("%f ", check_r[size-3]);
-    printf("%f ", check_r[size-2]);
-    printf("%f ", check_r[size-1]);
+    // printf("\n...\n");
+    // printf("%f ", check_r[size-3]);
+    // printf("%f ", check_r[size-2]);
+    // printf("%f ", check_r[size-1]);
     
 
     // Free allocated memory
