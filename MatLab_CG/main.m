@@ -17,7 +17,7 @@ function[x_sol] = my_pcg(A, b, tol, maxitr, x_0);
 
     %delta_new <- r^{T}*r
     delta_new = r' * r;
-    disp(delta_new);
+%    disp(delta_new);
 
     %Set counter
     wkr = 0;
@@ -28,13 +28,17 @@ function[x_sol] = my_pcg(A, b, tol, maxitr, x_0);
         q = A * d;
 %        disp(q);
 
-        %alpha <- delta_{new} / (d^{T}*q)
-        alpha = delta_new / (d' * q);
+        %Set dot <- (d^{T}*q)
+        dot = (d' *q);
+%        disp(dot);
+
+        %alpha <- delta_{new} /
+        alpha = delta_new / dot;
 %        disp(alpha);
 
         %x_{i+1} <- x_{i} + alpha * d
         x_sol = x_sol + alpha * d;
-%        disp(x_sol)
+        disp(x_sol)
 
         if (mod(wkr, 50) == 0 && wkr ~= 0)
             % r <- b - Ax
@@ -135,7 +139,7 @@ x_0 = [0; 0; 0];
 eps = 1e-6;
 
 %Maxnumber of iteration
-maxItr = 100000;
+maxItr = 1;
 
 %%Answer key
 %%Solve Ax = b with pcg

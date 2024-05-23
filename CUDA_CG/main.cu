@@ -55,19 +55,33 @@ int main(int argc, char** argv)
     float *r_d = NULL; // Residual
     float *dirc_d = NULL; // Direction
     float *Ax_d = NULL; // Vector Ax
+    float *q_d = NULL; // Vector Ad
+    float dot = 0.0f; // temporary val for d^{T} *q to get aplha
     
-    float alpha = 1.0;
+    //Using for cublas functin argument
+    float alpha = 1.0; 
     float alphamns1 = -1.0;// negative alpha
     float beta = 0.0;
+
     float r0, r1 = 0.0; // residual
     float delta_new = 0.0;
     float delta_old = 0.0;
+    const float EPS = 1e-5f;
+    const int MAX_ITR = 1;
+
+    // In CG iteration alpha and beta
+    float alph = 0.0f;
+    float ngtAlph = 0.0f;
+    float bta = 0.0f;
     
     //Stride for x and y using contiguous vectors
     //Using for calling cublasSgemv
     int strd_x = 1;
     int strd_y = 1;
      
+
+
+
 
     //(0) Set initial guess and given vector b, right hand side
     float *x = (float*)malloc(sizeof(float) * N);
@@ -84,6 +98,7 @@ int main(int argc, char** argv)
     CHECK(cudaMalloc((void**)&r_d, sizeof(float) * N));
     CHECK(cudaMalloc((void**)&dirc_d, sizeof(float) * N));
     CHECK(cudaMalloc((void**)&Ax_d, sizeof(float) * N));
+    CHECK(cudaMalloc((void**)&q_d, sizeof(float) * N));
 
 
     //(2) Copy value from host to device 
@@ -159,6 +174,51 @@ int main(int argc, char** argv)
     // printf("\n\n~~vector delta_new{0}~~\n %f\n ", delta_new);
     
     int cntr = 1; // counter
+
+    while(delta_new > EPS * EPS && cntr <= MAX_ITR){
+        //q <- Ad
+        checkCudaErrors(cublasSgemv(cublasHandle, CUBLAS_OP_N, N, N, &alpha, mtxA_d, N, dirc_d, strd_x, &beta, q_d, strd_y));
+        // //✅
+        // printf("\n\n~~q_d AKA vector Ad~~\n");
+        // print_vector(q_d, N);
+
+
+        //dot <- d^{T} * q
+        checkCudaErrors((cublasSdot(cublasHandle, N, dirc_d, strd_x, q_d, strd_y, &dot)));
+        // //✅
+        // printf("\n\n~~dot AKA (d^{T*q)~~\n %f\n", dot);
+
+        //alpha(a) <- delta_{new} / dot // dot <- d^{T} * q 
+        alph = delta_new / dot;
+        // //✅
+        // printf("\n\n~~alph ~~\n %f\n", alph);
+
+        //x_{i+1} <- x_{i} + alpha * d_{i}
+        checkCudaErrors((cublasSaxpy(cublasHandle, N, &alph, dirc_d, strd_x, x_d, strd_y)));
+        // //✅
+        // printf("\n\n~~x_{i+1}~~\n");
+        // print_vector(x_d, N);
+
+
+
+        if(cntr % 50 == 0){
+            //r <- b -Ax
+        }else{
+            // Set -alpha
+            ngtAlph = -alph;
+
+            //r <- r -alpha*q
+        }
+
+        // delta_old <- delta_new
+        // delta_old <- r^{T} * r
+        // bta <- delta_new / delta_old
+        // d <- r + bta * d
+
+
+
+        cntr++;
+    } // end of while
 
     // Free the GPU memory after use
     free(x);
