@@ -275,6 +275,9 @@ int main(int argc, char** argv)
         printf("😫😫😫The iteration did not converged😫😫😫");
     }
 
+    printf("\n\n~~vector x_sol~~\n");
+    print_vector(x_d, N);
+    
     float* x_h = (float*)malloc(sizeof(float) * N);
     CHECK(cudaMemcpy(x_h, x_d, N * sizeof(float), cudaMemcpyDeviceToHost));
 
