@@ -99,4 +99,24 @@ void print_mtx(const float *d_val, int N, int size){
     free(check_r);
 } // end of print_mtx
 
+void validate(const float *mtxA_h, const float* x_h, float* rhs, int N){
+    float rsum, diff, error = 0.0f;
+
+    for (int rw_wkr = 0; rw_wkr < N; rw_wkr++){
+        rsum = 0.0f;
+        for(int clm_wkr = 0; clm_wkr < N; clm_wkr++){
+            rsum += mtxA_h[rw_wkr*N + clm_wkr]* x_h[clm_wkr];
+            // printf("\nrsum = %f", rsum);
+        } // end of inner loop
+        diff = fabs(rsum - rhs[rw_wkr]);
+        if(diff > error){
+            error = diff;
+        }
+        
+    }// end of outer loop
+    
+    printf("\n\nTest Summary: Error amount = %f\n", error);
+
+}// end of validate
+
 #endif // HELPER_DEBUG_H

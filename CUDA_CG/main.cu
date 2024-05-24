@@ -78,13 +78,21 @@ int main(int argc, char** argv)
     int strd_x = 1;
     int strd_y = 1;
      
-
+    //Print 3 by 3 Matrix
+    printf("\n\n~~ 3 x 3 SPD matrix~~\n");
+    for(int rw_wkr = 0; rw_wkr < N; rw_wkr++){
+        for(int clm_wkr = 0; clm_wkr < N; clm_wkr++){
+            printf("%f ", mtxA_h[rw_wkr * N + clm_wkr]);
+        }
+        printf("\n");
+    }
 
 
 
     //(0) Set initial guess and given vector b, right hand side
     float *x = (float*)malloc(sizeof(float) * N);
     float *rhs = (float*)malloc(sizeof(float) * N);
+    
     
     for (int i = 0; i < N; i++){
         x[i] = 0.0;
@@ -176,11 +184,12 @@ int main(int argc, char** argv)
     int cntr = 1; // counter
 
     while(delta_new > EPS * EPS && cntr <= MAX_ITR){
+        printf("\n\n= = = Iteraion %d= = = \n", cntr);
         //q <- Ad
         checkCudaErrors(cublasSgemv(cublasHandle, CUBLAS_OP_N, N, N, &alpha, mtxA_d, N, dirc_d, strd_x, &beta, q_d, strd_y));
         // //✅
-        // printf("\n\n~~q_d AKA vector Ad~~\n");
-        // print_vector(q_d, N);
+        printf("\nq = \n");
+        print_vector(q_d, N);
 
 
         //dot <- d^{T} * q
@@ -191,13 +200,13 @@ int main(int argc, char** argv)
         //alpha(a) <- delta_{new} / dot // dot <- d^{T} * q 
         alph = delta_new / dot;
         // //✅
-        // printf("\n\n~~alph ~~\n %f\n", alph);
+        printf("\nalpha = %f\n", alph);
 
         //x_{i+1} <- x_{i} + alpha * d_{i}
         checkCudaErrors((cublasSaxpy(cublasHandle, N, &alph, dirc_d, strd_x, x_d, strd_y)));
         // //✅
-        // printf("\n\n~~x_{i+1}~~\n");
-        // print_vector(x_d, N);
+        printf("\nx_sol = \n");
+        print_vector(x_d, N);
 
 
 
@@ -231,26 +240,26 @@ int main(int argc, char** argv)
             //r_{i+1} <- r_{i} -alpha*q
             checkCudaErrors(cublasSaxpy(cublasHandle, N, &ngtAlph, q_d, strd_x, r_d, strd_y));
             //✅
-            // printf("\n\n~~vector r_{0}~~\n");
-            // print_vector(r_d, N);
+            printf("\nr = \n");
+            print_vector(r_d, N);
         }
 
         // delta_old <- delta_new
         delta_old = delta_new;
         // //✅
-        // printf("delta_old %f", delta_old);
+        printf("\ndelta_old = %f\n", delta_old);
 
         // delta_new <- r'_{i+1} * r_{i+1}
         checkCudaErrors(cublasSdot(cublasHandle, N, r_d, strd_x, r_d, strd_y, &delta_new));
         //✅
-        // printf("delta_new %f", delta_new);
+        printf("\ndelta_new = %f\n", delta_new);
         cudaDeviceSynchronize();
 
 
         // bta <- delta_new / delta_old
         bta = delta_new / delta_old;
         //✅
-        // printf("bta %f", bta);
+        printf("\nbta = %f\n", bta);
 
         //ßd <- bta * d_{i}
         checkCudaErrors(cublasSscal(cublasHandle, N, &bta, dirc_d, strd_x));
@@ -261,8 +270,8 @@ int main(int argc, char** argv)
         // d_{i+1} <- r_{i+1} + ßd_{i}
         checkCudaErrors(cublasSaxpy(cublasHandle, N, &alpha, r_d, strd_x, dirc_d, strd_y));
         //✅
-        // printf("\n\n~~vector dirc_d{i+1}~~\n");
-        // print_vector(dirc_d, N);
+        printf("\nd = \n");
+        print_vector(dirc_d, N);
         cudaDeviceSynchronize();
 
 
@@ -299,3 +308,285 @@ int main(int argc, char** argv)
 
     return 0;
 } // end of main
+
+
+/*
+Sample Run
+~~ 3 x 3 SPD matrix~~
+1.500400 1.329300 0.843900 
+1.329300 1.243600 0.693600 
+0.843900 0.693600 1.293500 
+
+
+= = = Iteraion 1= = = 
+
+q = 
+3.673600 
+3.266500 
+2.831000 
+
+alpha = 0.307028
+
+x_sol = 
+0.307028 
+0.307028 
+0.307028 
+
+r = 
+-0.127898 
+-0.002907 
+0.130804 
+
+delta_old = 3.000000
+
+delta_new = 0.033476
+
+bta = 0.011159
+
+d = 
+-0.116739 
+0.008252 
+0.141963 
+
+
+= = = Iteraion 2= = = 
+
+q = 
+-0.044384 
+-0.046454 
+0.090836 
+
+alpha = 1.892012
+
+x_sol = 
+0.086156 
+0.322641 
+0.575623 
+
+r = 
+-0.043923 
+0.084984 
+-0.041059 
+
+delta_old = 0.033476
+
+delta_new = 0.010837
+
+bta = 0.323739
+
+d = 
+-0.081716 
+0.087656 
+0.004900 
+
+
+= = = Iteraion 3= = = 
+
+q = 
+-0.001952 
+0.003781 
+-0.001825 
+
+alpha = 22.483810
+
+x_sol = 
+-1.751141 
+2.293478 
+0.685784 
+
+r = 
+-0.000041 
+-0.000037 
+-0.000030 
+
+delta_old = 0.010837
+
+delta_new = 0.000000
+
+bta = 0.000000
+
+d = 
+-0.000041 
+-0.000037 
+-0.000030 
+
+
+= = = Iteraion 4= = = 
+
+q = 
+-0.000137 
+-0.000122 
+-0.000099 
+
+alpha = 0.302960
+
+x_sol = 
+-1.751154 
+2.293466 
+0.685775 
+
+r = 
+0.000000 
+-0.000000 
+0.000000 
+
+delta_old = 0.000000
+
+delta_new = 0.000000
+
+bta = 0.000000
+
+d = 
+0.000000 
+-0.000000 
+0.000000 
+Converged at iteration 5
+
+~~vector x_sol~~
+-1.751154 
+2.293466 
+0.685775 
+
+
+Test Summary: Error amount = 0.000000
+[kkatsumi@gpub080 CUDA_CG]$ nvcc main.cu -o main  -lcublas -lcusparse
+[kkatsumi@gpub080 CUDA_CG]$ ./main
+
+
+~~ 3 x 3 SPD matrix~~
+1.500400 1.329300 0.843900 
+1.329300 1.243600 0.693600 
+0.843900 0.693600 1.293500 
+
+
+= = = Iteraion 1= = = 
+
+q = 
+3.673600 
+3.266500 
+2.831000 
+
+alpha = 0.307028
+
+x_sol = 
+0.307028 
+0.307028 
+0.307028 
+
+r = 
+-0.127898 
+-0.002907 
+0.130804 
+
+delta_old = 3.000000
+
+delta_new = 0.033476
+
+bta = 0.011159
+
+d = 
+-0.116739 
+0.008252 
+0.141963 
+
+
+= = = Iteraion 2= = = 
+
+q = 
+-0.044384 
+-0.046454 
+0.090836 
+
+alpha = 1.892012
+
+x_sol = 
+0.086156 
+0.322641 
+0.575623 
+
+r = 
+-0.043923 
+0.084984 
+-0.041059 
+
+delta_old = 0.033476
+
+delta_new = 0.010837
+
+bta = 0.323739
+
+d = 
+-0.081716 
+0.087656 
+0.004900 
+
+
+= = = Iteraion 3= = = 
+
+q = 
+-0.001952 
+0.003781 
+-0.001825 
+
+alpha = 22.483810
+
+x_sol = 
+-1.751141 
+2.293478 
+0.685784 
+
+r = 
+-0.000041 
+-0.000037 
+-0.000030 
+
+delta_old = 0.010837
+
+delta_new = 0.000000
+
+bta = 0.000000
+
+d = 
+-0.000041 
+-0.000037 
+-0.000030 
+
+
+= = = Iteraion 4= = = 
+
+q = 
+-0.000137 
+-0.000122 
+-0.000099 
+
+alpha = 0.302960
+
+x_sol = 
+-1.751154 
+2.293466 
+0.685775 
+
+r = 
+0.000000 
+-0.000000 
+0.000000 
+
+delta_old = 0.000000
+
+delta_new = 0.000000
+
+bta = 0.000000
+
+d = 
+0.000000 
+-0.000000 
+0.000000 
+Converged at iteration 5
+
+~~vector x_sol~~
+-1.751154 
+2.293466 
+0.685775 
+
+
+*/
