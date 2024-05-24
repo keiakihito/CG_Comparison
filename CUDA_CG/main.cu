@@ -253,7 +253,7 @@ int main(int argc, char** argv)
         checkCudaErrors(cublasSdot(cublasHandle, N, r_d, strd_x, r_d, strd_y, &delta_new));
         //✅
         printf("\ndelta_new = %f\n", delta_new);
-        cudaDeviceSynchronize();
+
 
 
         // bta <- delta_new / delta_old
