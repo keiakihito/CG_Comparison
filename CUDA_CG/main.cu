@@ -63,11 +63,10 @@ int main(int argc, char** argv)
     float alphamns1 = -1.0;// negative alpha
     float beta = 0.0;
 
-    float r0, r1 = 0.0; // residual
     float delta_new = 0.0;
     float delta_old = 0.0;
     const float EPS = 1e-5f;
-    const int MAX_ITR = 1;
+    const int MAX_ITR = 10000;
 
     // In CG iteration alpha and beta
     float alph = 0.0f;
@@ -93,7 +92,8 @@ int main(int argc, char** argv)
     }//end of for
 
     //(1) Allocate space in global memory
-    CHECK(cudaMalloc((void**)&mtxA_d, sizeof(float) * (N * N))); 
+    CHECK(cudaMalloc((void**)&mtxA_d, sizeof(float) * (N * N)));
+    // CHECK(cudaMalloc((void**)&x_h, sizeof(float) * N)); 
     CHECK(cudaMalloc((void**)&x_d, sizeof(float) * N));
     CHECK(cudaMalloc((void**)&r_d, sizeof(float) * N));
     CHECK(cudaMalloc((void**)&dirc_d, sizeof(float) * N));
@@ -201,26 +201,90 @@ int main(int argc, char** argv)
 
 
 
+
+
+
         if(cntr % 50 == 0){
-            //r <- b -Ax
+            //r <- b -Ax Recompute
+
+            //r_{0} <- b
+            CHECK(cudaMemcpy(r_d, rhs, N * sizeof(float), cudaMemcpyHostToDevice));
+            // //✅
+            // printf("\n\n~~vector r_{0}~~\n");
+            // print_vector(r_d, N);
+            
+            //Ax_d <- A * x
+            checkCudaErrors(cublasSgemv(cublasHandle, CUBLAS_OP_N, N, N, &alpha, mtxA_d, N, x_d, strd_x, &beta, Ax_d, strd_y));
+            //✅
+            // printf("\n\n~~vector Ax_{0}~~\n");
+            // print_vector(Ax_d, N);
+
+            //r_{0} = b- Ax
+            checkCudaErrors(cublasSaxpy(cublasHandle, N, &alphamns1, Ax_d, strd_x, r_d, strd_y));
+            //✅
+            // printf("\n\n~~vector r_{0}~~\n");
+            // print_vector(r_d, N);
         }else{
             // Set -alpha
             ngtAlph = -alph;
 
-            //r <- r -alpha*q
+            //r_{i+1} <- r_{i} -alpha*q
+            checkCudaErrors(cublasSaxpy(cublasHandle, N, &ngtAlph, q_d, strd_x, r_d, strd_y));
+            //✅
+            // printf("\n\n~~vector r_{0}~~\n");
+            // print_vector(r_d, N);
         }
 
         // delta_old <- delta_new
-        // delta_old <- r^{T} * r
-        // bta <- delta_new / delta_old
-        // d <- r + bta * d
+        delta_old = delta_new;
+        // //✅
+        // printf("delta_old %f", delta_old);
 
+        // delta_new <- r'_{i+1} * r_{i+1}
+        checkCudaErrors(cublasSdot(cublasHandle, N, r_d, strd_x, r_d, strd_y, &delta_new));
+        //✅
+        // printf("delta_new %f", delta_new);
+        cudaDeviceSynchronize();
+
+
+        // bta <- delta_new / delta_old
+        bta = delta_new / delta_old;
+        //✅
+        // printf("bta %f", bta);
+
+        //ßd <- bta * d_{i}
+        checkCudaErrors(cublasSscal(cublasHandle, N, &bta, dirc_d, strd_x));
+        //✅
+        // printf("\n\n~~ ß // bta * dirc_d_{i}~~\n");
+        // print_vector(dirc_d, N);
+
+        // d_{i+1} <- r_{i+1} + ßd_{i}
+        checkCudaErrors(cublasSaxpy(cublasHandle, N, &alpha, r_d, strd_x, dirc_d, strd_y));
+        //✅
+        // printf("\n\n~~vector dirc_d{i+1}~~\n");
+        // print_vector(dirc_d, N);
+        cudaDeviceSynchronize();
 
 
         cntr++;
     } // end of while
 
-    // Free the GPU memory after use
+    if(cntr < MAX_ITR){
+        printf("Converged at iteration %d", cntr);
+    }else{
+        printf("😫😫😫The iteration did not converged😫😫😫");
+    }
+
+    float* x_h = (float*)malloc(sizeof(float) * N);
+    CHECK(cudaMemcpy(x_h, x_d, N * sizeof(float), cudaMemcpyDeviceToHost));
+
+    //Check error as error = b - A * x_sol
+    validate(mtxA_h, x_h, rhs, N);
+
+
+
+    //(6) Free the GPU memory after use
+    free(x_h);
     free(x);
     free(rhs);
     cudaFree(mtxA_d);
@@ -228,6 +292,7 @@ int main(int argc, char** argv)
     cudaFree(r_d);
     cudaFree(dirc_d);
     cudaFree(Ax_d);
+    cudaFree(q_d);
 
-
+    return 0;
 } // end of main

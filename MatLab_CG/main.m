@@ -38,7 +38,7 @@ function[x_sol] = my_pcg(A, b, tol, maxitr, x_0);
 
         %x_{i+1} <- x_{i} + alpha * d
         x_sol = x_sol + alpha * d;
-        disp(x_sol)
+%        disp(x_sol)
 
         if (mod(wkr, 50) == 0 && wkr ~= 0)
             % r <- b - Ax
@@ -51,14 +51,16 @@ function[x_sol] = my_pcg(A, b, tol, maxitr, x_0);
 
         %delta_{old} <- delta_{new}
         delta_old = delta_new;
+%        disp(delta_old);
 
         %delta_{new} <- r^{T} * r
         delta_new = r' * r;
-    %    disp(delta_new);
+%        disp(delta_new);
 
         %beta <- delta_{new} / delta_{old}
         beta = delta_new / delta_old;
-    %    disp(beta);
+%        disp(beta);
+
 
         % d_{i+1} <- r_{i+1} + beta * d_{i}
         d = r + beta * d;
@@ -139,7 +141,7 @@ x_0 = [0; 0; 0];
 eps = 1e-6;
 
 %Maxnumber of iteration
-maxItr = 1;
+maxItr = 10000;
 
 %%Answer key
 %%Solve Ax = b with pcg
@@ -150,7 +152,7 @@ maxItr = 1;
 %Solve Ax = b with manual CG implemenation
 fprintf('Slove Ax = b with my_pcg()\n');
 x_myPcg = my_pcg(A, b, eps, maxItr, x_0);
-%disp(x_myPcg)
+disp(x_myPcg)
 
 %Compare answer and my solution
 %validate(x_ans, x_myPcg);
