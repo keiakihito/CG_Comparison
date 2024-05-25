@@ -26,7 +26,7 @@
 }
 
 //Bigger size matrix
-#define N 128 // 2^15 < 46340 < 2^16
+#define N 32000 // 2^15 < 46340 < 2^16
 
 
 // //Hardcorded 3 by 3 matrix
@@ -141,8 +141,17 @@ int main(int argc, char** argv)
     //     printf("\n");
     // }
 
-    //Generating Random SPD Matrix
-    float* mtxA_h = generateSPD_DenseMatrix(N);
+    //Generating Random Dense SPD Matrix
+    // float* mtxA_h = generateSPD_DenseMatrix(N);
+
+    //Generating Random Tridiagonal SPD Matrix
+    float* mtxA_h = generate_TriDiagMatrix(N);
+    // for(int rw_wkr = 0; rw_wkr < N; rw_wkr++){
+    //     for(int clm_wkr = 0; clm_wkr < N; clm_wkr++){
+    //         printf("%f ", mtxA_h[rw_wkr*N + clm_wkr]);
+    //     }
+    //     printf("\n");
+    // }
 
 
 
@@ -239,7 +248,7 @@ int main(int argc, char** argv)
     
     int cntr = 1; // counter
 
-    bool debug = false;
+    bool debug = true;
     while(delta_new > EPS * EPS && cntr < MAX_ITR){
         if(debug){
             printf("\n\n= = = Iteraion %d= = = \n", cntr);
@@ -257,9 +266,9 @@ int main(int argc, char** argv)
         //dot <- d^{T} * q
         checkCudaErrors((cublasSdot(cublasHandle, N, dirc_d, strd_x, q_d, strd_y, &dot)));
         // //✅
-        if(debug){
-            printf("\n\n~~dot AKA (d^{T*q)~~\n %f\n", dot);
-        }
+        // if(debug){
+        //     printf("\n\n~~dot AKA (d^{T*q)~~\n %f\n", dot);
+        // }
         
 
         //alpha(a) <- delta_{new} / dot // dot <- d^{T} * q 
